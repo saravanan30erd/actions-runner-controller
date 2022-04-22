@@ -140,7 +140,23 @@ func (r *HorizontalRunnerAutoscalerReconciler) suggestReplicasByQueuedAndInProgr
 		if len(allJobs) == 0 {
 			fallback_cb()
 		} else {
+		JOB:
 			for _, job := range allJobs {
+				labels := make(map[string]struct{}, len(job.Labels))
+				for _, l := range job.Labels {
+					labels[l] = struct{}{}
+				}
+
+				for _, l := range st.labels {
+					if l == "self-hosted" {
+						continue
+					}
+
+					if _, ok := labels[l]; !ok {
+						continue JOB
+					}
+				}
+
 				switch job.GetStatus() {
 				case "completed":
 					// We add a case for `completed` so it is not counted in `unknown`.
